@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Panel logowania</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+* { box-sizing: border-box; font-family: 'Orbitron', sans-serif; }
+body { margin: 0; height: 100vh; background: linear-gradient(135deg, #1a0000, #000); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; color: #fff; }
+
+.login-box { background: rgba(0,0,0,0.95); color: #fff; width: 360px; padding: 40px; border-radius: 16px; box-shadow: 0 0 30px #c40000; position: relative; z-index: 10; }
+h2 { text-align: center; margin-bottom: 24px; text-shadow: 0 0 8px #c40000; letter-spacing: 1px; font-size: 28px; }
+.input-group { margin-bottom: 16px; }
+.input-group input { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #fff; background: transparent; color: #fff; outline: none; transition: 0.3s; }
+.input-group input:focus { border-color: #ff1a1a; box-shadow: 0 0 10px #ff1a1a; }
+.login-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; background: #c40000; color: #fff; font-size: 16px; cursor: pointer; transition: 0.25s; box-shadow: 0 0 10px #ff1a1a; }
+.login-btn:hover { background: #ff1a1a; transform: scale(1.03); }
+
+.msg { margin-top: 14px; text-align: center; min-height: 18px; text-shadow: 0 0 4px #000; }
+.ok { color: #7CFC90; }
+.err { color: #ff4d4d; }
+.footer-text { margin-top: 18px; text-align: center; font-size: 12px; color: #ccc; }
+
+.skull, .weapon { position: absolute; font-size: 20px; user-select: none; pointer-events: none; animation: fall linear infinite; z-index: 1; }
+.skull { color: #c40000; text-shadow: 0 0 6px #c40000; }
+.weapon { color: #000; text-shadow: 0 0 6px #000; }
+@keyframes fall { from { transform: translateY(-50px); } to { transform: translateY(110vh); } }
+
+#successPage, #familyPage { display: none; width: 100vw; height: 100vh; background: linear-gradient(135deg, #1a0000, #000); position: fixed; top: 0; left: 0; z-index: 100; align-items: center; justify-content: center; overflow: hidden; }
+#welcomePanel, #familyPanel { background: linear-gradient(135deg, #330000, #660000); color: #fff; padding: 40px; border-radius: 16px; text-align: center; box-shadow: 0 0 40px #c40000; z-index: 10; max-width: 90%; width: 500px; }
+#welcomePanel h1, #familyPanel h1 { margin: 0 0 10px 0; font-size: 32px; text-shadow: 0 0 8px #000; }
+#welcomePanel p, #familyPanel p { margin: 5px 0; font-size: 20px; }
+#familyList div { font-size: 18px; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-radius: 10px; background: #330000; box-shadow: 0 0 10px #000; margin-bottom: 8px; }
+
+.rangeBtn { margin-left: 10px; padding: 2px 6px; border-radius: 4px; border: none; background: #ff4d4d; color: #fff; cursor: pointer; transition: 0.2s; }
+.rangeBtn:hover { background: #ff1a1a; }
+.rangeSelection { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
+
+#notification { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #ff4d4d; color: #fff; padding: 10px 20px; border-radius: 8px; display: none; z-index: 300; box-shadow: 0 0 10px #000; font-weight: bold; }
+
+.menuButton { display: none; position: fixed; top: 20px; left: 20px; width: 50px; height: 50px; border-radius: 50%; background: #c40000; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 200; transition: transform 0.3s; flex-direction: column; padding: 10px; box-shadow: 0 0 10px #ff1a1a; }
+.menuButton.visible { display: flex; }
+.menuButton:hover { transform: scale(1.1); }
+.bar { width: 30px; height: 4px; background: #fff; margin: 4px 0; border-radius: 2px; transition: all 0.3s; }
+.menuButton.active .bar:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+.menuButton.active .bar:nth-child(2) { opacity: 0; }
+.menuButton.active .bar:nth-child(3) { transform: rotate(-45deg) translate(6px, -6px); }
+
+#sideMenu { position: fixed; top: 0; left: -250px; width: 250px; height: 100%; background: #660000; color: #fff; padding: 20px; transition: left 0.4s ease; z-index: 150; box-shadow: 0 0 20px #000; }
+#sideMenu.active { left: 0; }
+#sideMenu .menuLogo { text-align: center; margin-bottom: 20px; }
+#sideMenu .menuLogo img { max-width: 100px; filter: drop-shadow(0 0 8px #fff); }
+#sideMenu ul { list-style: none; padding: 0; }
+#sideMenu ul li { margin: 20px 0; cursor: pointer; transition: 0.2s; }
+#sideMenu ul li:hover { color: #ff4d4d; text-shadow: 0 0 5px #000; }
+
+</style>
+</head>
+<body>
+
+<div class="login-box" id="loginBox">
+    <h2>Logowanie</h2>
+    <form id="loginForm">
+        <div class="input-group">
+            <input id="login" type="text" placeholder="Login" required>
+        </div>
+        <div class="input-group" style="position:relative;">
+            <input id="password" type="password" placeholder="Hasło" required>
+            <span id="togglePass" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; user-select:none;">👁</span>
+        </div>
+        <button class="login-btn" type="submit">Zaloguj się</button>
+    </form>
+    <div id="msg" class="msg"></div>
+    <div id="loader" style="display:none; margin-top:16px;">
+        <div style="height:8px; background:#300; border-radius:6px; overflow:hidden;">
+            <div id="bar" style="height:100%; width:0%; background:#c40000; transition:width 0.5s;"></div>
+        </div>
+        <div id="status" style="margin-top:10px; text-align:center; font-size:14px; color:#fff;"></div>
+    </div>
+    <div class="footer-text">© 2026 Twoja strona</div>
+</div>
+
+<div id="successPage">
+    <div id="welcomePanel">
+        <h1 id="welcomeMessage">Witaj w systemie</h1>
+        <p id="userLogin">Login: </p>
+        <p id="userNumber">Numer: </p>
+    </div>
+</div>
+
+<div id="familyPage">
+    <div id="familyPanel">
+        <h1>Dane rodziny</h1>
+        <div id="familyList" style="margin-top:20px; display:flex; flex-direction:column; gap:10px;"></div>
+    </div>
+</div>
+
+<div id="notification"></div>
+
+<script>
+// ----------- Users -----------
+const users = {
+    "LeanAzbest": { password: "R4nD-8kZ!pQ2", number: "#51679", role: "admin" },
+    "DwayneBrooks": { password: "Db#9rT!7qX", number: "#126572", role: "admin" },
+    "SophieSantiago": { password: "Ss!4kL2@vZ", number: "#122535", role: "user" },
+    "VincencikZadyma": { password: "Vz!39887Gang", number: "#39887", role: "admin" }
+};
+
+// ----------- Family members -----------
+const defaultFamily = [
+    { name: "Sophie Santiago", number: "#122535", range: 3 },
+    { name: "Dwayne Brooks", number: "#126572", range: 10 },
+    { name: "Lean Azbest", number: "#51679", range: 8 },
+    { name: "Vincencik Zadyma", number: "#39887", range: 10 }
+];
+
+// Wczytaj z localStorage lub domyślną listę
+let familyMembers = JSON.parse(localStorage.getItem('familyMembers')) || defaultFamily;
+
+// Sprawdź, czy Vincencik Zadyma jest w liście, jeśli nie, dodaj go
+if(!familyMembers.some(m => m.name === "Vincencik Zadyma")){
+    familyMembers.push({ name: "Vincencik Zadyma", number: "#39887", range: 10 });
+    localStorage.setItem('familyMembers', JSON.stringify(familyMembers));
+}
+
+let currentUser = null;
+
+// ----------- Login -----------
+const toggle = document.getElementById('togglePass');
+const passwordInput = document.getElementById('password');
+toggle.addEventListener('click', () => {
+    passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
+    toggle.textContent = passwordInput.type === 'password' ? '👁' : '🙈';
+});
+
+function showNotification(msg){
+    const note = document.getElementById('notification');
+    note.textContent = msg;
+    note.style.display = 'block';
+    setTimeout(()=>{ note.style.display='none'; }, 3000);
+}
+
+document.getElementById('loginForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const login = document.getElementById('login').value.trim();
+    const pass = passwordInput.value;
+    const msg = document.getElementById('msg');
+    const loader = document.getElementById('loader');
+    const bar = document.getElementById('bar');
+    const status = document.getElementById('status');
+
+    msg.textContent = '';
+    msg.className = 'msg';
+    loader.style.display = 'block';
+    bar.style.width = '0%';
+    status.textContent = 'Weryfikacja...';
+
+    setTimeout(()=>{ bar.style.width='33%'; status.textContent='Sprawdzanie danych...'; },800);
+    setTimeout(()=>{ bar.style.width='66%'; status.textContent='Autoryzacja dostępu...'; },1600);
+    setTimeout(()=>{
+        bar.style.width='100%'; loader.style.display='none';
+        if(users[login] && users[login].password===pass){
+            msg.textContent='DOSTĘP PRZYZNANY ✔'; msg.className='msg ok';
+            document.getElementById('loginBox').style.display='none';
+            document.getElementById('successPage').style.display='flex';
+            currentUser = users[login];
+
+            let menuButton = document.getElementById('menuButton');
+            if(!menuButton){
+                menuButton = document.createElement('div');
+                menuButton.className='menuButton visible';
+                menuButton.id='menuButton';
+                menuButton.innerHTML='<div class="bar"></div><div class="bar"></div><div class="bar"></div>';
+                document.body.appendChild(menuButton);
+
+                const sideMenu = document.createElement('div');
+                sideMenu.id='sideMenu';
+                sideMenu.innerHTML=`
+                    <div class="menuLogo"><img src="logo.png" alt="Logo"></div>
+                    <ul>
+                        <li id="homeLink">Strona główna</li>
+                        <li id="familyLink">Dane rodziny</li>
+                    </ul>
+                `;
+                document.body.appendChild(sideMenu);
+
+                menuButton.addEventListener('click', ()=>{
+                    sideMenu.classList.toggle('active');
+                    menuButton.classList.toggle('active');
+                });
+
+                document.getElementById('familyLink').addEventListener('click', ()=>{
+                    document.getElementById('successPage').style.display='none';
+                    document.getElementById('familyPage').style.display='flex';
+                    renderFamily();
+                });
+                document.getElementById('homeLink').addEventListener('click', ()=>{
+                    document.getElementById('familyPage').style.display='none';
+                    document.getElementById('successPage').style.display='flex';
+                });
+            }
+
+            document.getElementById('welcomeMessage').textContent='Witaj w systemie';
+            document.getElementById('userLogin').textContent=login;
+            document.getElementById('userNumber').textContent=`Numer: ${users[login].number}`;
+
+        } else {
+            msg.textContent='BRAK DOSTĘPU ✖';
+            msg.className='msg err';
+        }
+    },2400);
+});
+
+// ----------- Family rendering -----------
+function renderFamily(){
+    const familyList = document.getElementById('familyList');
+    familyList.innerHTML='';
+    familyMembers.forEach(member=>{
+        const div = document.createElement('div');
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent=`${member.name} ${member.number} | Ranga: ${member.range}`;
+
+        const btn = document.createElement('button');
+        btn.textContent='Ranga'; btn.className='rangeBtn';
+        btn.addEventListener('click', ()=>{
+            if(currentUser.role!=='admin'){ showNotification('Nie masz permisji do nadawania rang'); return; }
+            let menu = div.querySelector('.rangeSelection');
+            if(menu){ menu.remove(); return; }
+            menu=document.createElement('div'); menu.className='rangeSelection';
+            for(let i=1;i<=10;i++){
+                const rBtn=document.createElement('button'); rBtn.textContent=i; rBtn.className='rangeBtn';
+                rBtn.addEventListener('click', ()=>{
+                    member.range=i;
+                    localStorage.setItem('familyMembers', JSON.stringify(familyMembers));
+                    renderFamily();
+                });
+                menu.appendChild(rBtn);
+            }
+            div.appendChild(menu);
+        });
+
+        div.appendChild(nameSpan);
+        div.appendChild(btn);
+        familyList.appendChild(div);
+    });
+}
+
+// ----------- Effects -----------
+function spawnSkull(){ const skull=document.createElement('div'); skull.className='skull'; skull.textContent='💀';
+skull.style.left=Math.random()*100+'vw'; skull.style.fontSize=(12+Math.random()*20)+'px'; skull.style.opacity=0.5+Math.random()*0.5;
+skull.style.animationDuration=(4+Math.random()*6)+'s'; skull.style.top='-50px'; document.body.appendChild(skull); setTimeout(()=>skull.remove(),12000);}
+setInterval(spawnSkull,100);
+
+function spawnWeapon(){ if(document.getElementById('successPage').style.display==='flex'||document.getElementById('familyPage').style.display==='flex'){ 
+const weapon=document.createElement('div'); weapon.className='weapon'; weapon.textContent='🗡️';
+weapon.style.left=Math.random()*100+'vw'; weapon.style.fontSize=(12+Math.random()*20)+'px'; weapon.style.opacity=0.5+Math.random()*0.5;
+weapon.style.animationDuration=(4+Math.random()*6)+'s'; weapon.style.top='-50px'; document.body.appendChild(weapon); setTimeout(()=>weapon.remove(),12000);}}
+setInterval(spawnWeapon,150);
+
+</script>
+</body>
+</html>
